@@ -1,0 +1,26 @@
+{
+  "name": "mars-rover-rsvp-server",
+  "version": "0.0.1",
+  "description": "UCT Mars Rover central server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clean": "rm -rf ./build",
+    "build": "npm run clean && babel ./src --presets @woodywoodsta/babel-preset-node -d ./build",
+    "watch": "npm run clean && babel ./src --presets @woodywoodsta/babel-preset-node -d ./build -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WoodyWoodsta/mars-rover-rsvp-server.git"
+  },
+  "author": "Sean Wood <woodywoodsta@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/WoodyWoodsta/mars-rover-rsvp-server/issues"
+  },
+  "homepage": "https://github.com/WoodyWoodsta/mars-rover-rsvp-server#readme",
+  "devDependencies": {
+    "@woodywoodsta/babel-preset-node": "^1.0.2",
+    "babel-cli": "^6.11.4"
+  }
+}
