@@ -7,7 +7,9 @@ import serve from 'koa-static';
 import koaLogger from 'koa-logger';
 import { readFileSync } from 'fs';
 import router from './routes';
-import rceClient from './rce/rce-client';
+import rceIOClient from './rce/rce-io-client';
+import * as controlIO from './servers/control-io';
+import * as teleIO from './servers/tele-io';
 
 const log = debug('rsvp-server:control-server');
 
@@ -20,11 +22,15 @@ const app = new Koa();
 app.use(koaLogger());
 app.use(koaBody());
 app.use(router());
+
+controlIO.initSocket(app);
+teleIO.initSocket(app);
+
 app.use(serve('./app'));
 
 // === Connect ===
 app.listen(config.rsvp.server.port);
 log(`RSVP Control Server started on port ${config.rsvp.server.port}`);
 
-// Initialise socket connection to RCE
-rceClient();
+// Initialise client WebSocket connection to RCE
+// rceIOClient();
