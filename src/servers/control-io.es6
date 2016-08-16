@@ -14,7 +14,6 @@ const acceptedEvents = ['test', 'disconnect'];
  */
 export function initSocket(app) {
   log('Starting ControlIO socket...');
-
   controlIO.attach(app);
 
   attachMiddleware(controlIO);
