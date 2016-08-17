@@ -15,6 +15,7 @@ let kurentoClient = null;
 let presenter = null;
 let viewers = [];
 
+// === Public ===
 /**
  * Initialise the socket server
  * @param  {Object} app The Koa application instance onto which to attach the KoaSocket
@@ -28,6 +29,7 @@ export function initSocket(app) {
   log('KurentoIO WebSocket live');
 }
 
+// === Private ===
 function attachCoreListeners(io) {
   io.on('connection', (ctx) => {
     const sessionId = _nextUniqueId();
@@ -38,7 +40,7 @@ function attachCoreListeners(io) {
 }
 
 function attachKurentoListeners(socket, sessionId) {
-  socket.on('error', (error) => {
+  socket.on('error', () => {
     log(`Connection ${sessionId} error`);
     stop(sessionId);
   });
@@ -106,7 +108,6 @@ function attachKurentoListeners(socket, sessionId) {
   });
 }
 
-// === Private ===
 function _nextUniqueId() {
   idCounter++;
   return idCounter.toString();
