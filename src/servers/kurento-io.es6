@@ -5,14 +5,14 @@ import kurento from 'kurento-client';
 import { readFileSync } from 'fs';
 
 const log = debug('rsvp-server:kurento-io');
-const config = JSON.parse(readFileSync('./config.json'));
+const config = JSON.parse(readFileSync('./config.json')); // TODO: Convert this to a javascript config file
 const kurentoIO = new KoaSocket('KurentoIO');
 const candidatesQueue = {};
-const noPresenterMessage = 'No active presenter. Try again later...';
+const noMasterMessage = 'No active rover. Try again later...';
 
 let idCounter = 0;
 let kurentoClient = null;
-let presenter = null;
+let master = null; // TODO: Get rid of this
 let viewers = [];
 
 // === Public ===
@@ -27,12 +27,18 @@ export function initSocket(app) {
   attachCoreListeners(kurentoIO);
 
   log('KurentoIO WebSocket live');
+
+  startRTSP((error) => {
+    if (!error) {
+      log('RTSP/HTTP mjpeg stream connected successfully');
+    }
+  });
 }
 
 // === Private ===
 function attachCoreListeners(io) {
   io.on('connection', (ctx) => {
-    const sessionId = _nextUniqueId();
+    const sessionId = nextUniqueId();
     log(`New connection received with sessionId: ${sessionId}`);
 
     attachKurentoListeners(ctx.socket, sessionId);
@@ -55,23 +61,6 @@ function attachKurentoListeners(socket, sessionId) {
     log(`Connection ${sessionId} received message: ${message}`);
 
     switch (message.id) {
-      case 'presenter':
-        startPresenter(sessionId, socket, message.sdpOffer, (error, sdpAnswer) => {
-          if (error) {
-            return socket.send(JSON.stringify({
-              id: 'presenterResponse',
-              response: 'rejected',
-              message: error,
-            }));
-          }
-          socket.send(JSON.stringify({
-            id: 'presenterResponse',
-            response: 'accepted',
-            sdpAnswer,
-          }));
-        });
-        break;
-
       case 'viewer':
         startViewer(sessionId, socket, message.sdpOffer, (error, sdpAnswer) => {
           if (error) {
@@ -108,13 +97,20 @@ function attachKurentoListeners(socket, sessionId) {
   });
 }
 
-function _nextUniqueId() {
+/**
+ * Create a new, unique ID
+ * @return {String} The stringified ID
+ */
+function nextUniqueId() {
   idCounter++;
   return idCounter.toString();
 }
 
-// Recover kurentoClient for the first time.
-function _getKurentoClient(callback) {
+/**
+ * Recover the Kurento client for the first time
+ * @param  {Function} callback
+ */
+function getKurentoClient(callback) {
   if (kurentoClient !== null) {
     return callback(null, kurentoClient);
   }
@@ -130,105 +126,23 @@ function _getKurentoClient(callback) {
   });
 }
 
-function startPresenter(sessionId, ws, sdpOffer, callback) {
-  clearCandidatesQueue(sessionId);
-
-  if (presenter !== null) {
-    stop(sessionId);
-    return callback('Another user is currently acting as presenter. Try again later ...');
-  }
-
-  presenter = {
-    id: sessionId,
-    pipeline: null,
-    webRtcEndpoint: null,
-  };
-
-  _getKurentoClient((error, _kurentoClient) => {
-    if (error) {
-      stop(sessionId);
-      return callback(error);
-    }
-
-    if (presenter === null) {
-      stop(sessionId);
-      return callback(noPresenterMessage);
-    }
-
-    _kurentoClient.create('MediaPipeline', (createMediaPipelineError, pipeline) => {
-      if (createMediaPipelineError) {
-        stop(sessionId);
-        return callback(createMediaPipelineError);
-      }
-
-      if (presenter === null) {
-        stop(sessionId);
-        return callback(noPresenterMessage);
-      }
-
-      presenter.pipeline = pipeline;
-      pipeline.create('WebRtcEndpoint', (createEndpointError, webRtcEndpoint) => {
-        if (createEndpointError) {
-          stop(sessionId);
-          return callback(createEndpointError);
-        }
-
-        if (presenter === null) {
-          stop(sessionId);
-          return callback(noPresenterMessage);
-        }
-
-        presenter.webRtcEndpoint = webRtcEndpoint;
-
-        if (candidatesQueue[sessionId]) {
-          while (candidatesQueue[sessionId].length) {
-            const candidate = candidatesQueue[sessionId].shift();
-            webRtcEndpoint.addIceCandidate(candidate);
-          }
-        }
-
-        webRtcEndpoint.on('OnIceCandidate', (event) => {
-          const candidate = kurento.getComplexType('IceCandidate')(event.candidate);
-          ws.send(JSON.stringify({
-            id: 'iceCandidate',
-            candidate,
-          }));
-        });
-
-        webRtcEndpoint.processOffer(sdpOffer, (sdpOfferError, sdpAnswer) => {
-          if (sdpOfferError) {
-            stop(sessionId);
-            return callback(sdpOfferError);
-          }
-
-          if (presenter === null) {
-            stop(sessionId);
-            return callback(noPresenterMessage);
-          }
-
-          callback(null, sdpAnswer);
-        });
-
-        webRtcEndpoint.gatherCandidates((gatherCandsErro) => {
-          if (gatherCandsErro) {
-            stop(sessionId);
-            return callback(gatherCandsErro);
-          }
-        });
-      });
-    });
-  });
-}
-
+/**
+ * Generate a new viewer endpoint and intiate a connection
+ * @param  {Number}   sessionId The ID of the session wishing to connect
+ * @param  {Object}   ws        The WebRTC WebSocket
+ * @param  {Object}   sdpOffer  SDP Offer from the session
+ * @param  {Function} callback
+ * @return {function}             The result of the callback
+ */
 function startViewer(sessionId, ws, sdpOffer, callback) {
   clearCandidatesQueue(sessionId);
 
-  if (presenter === null) {
+  if (master === null) {
     stop(sessionId);
-    return callback(noPresenterMessage);
+    return callback(noMasterMessage);
   }
 
-  presenter.pipeline.create('WebRtcEndpoint', (error, webRtcEndpoint) => {
+  master.pipeline.create('WebRtcEndpoint', (error, webRtcEndpoint) => {
     if (error) {
       stop(sessionId);
       return callback(error);
@@ -238,9 +152,9 @@ function startViewer(sessionId, ws, sdpOffer, callback) {
       ws,
     };
 
-    if (presenter === null) {
+    if (master === null) {
       stop(sessionId);
-      return callback(noPresenterMessage);
+      return callback(noMasterMessage);
     }
 
     if (candidatesQueue[sessionId]) {
@@ -263,19 +177,19 @@ function startViewer(sessionId, ws, sdpOffer, callback) {
         stop(sessionId);
         return callback(sdpOfferError);
       }
-      if (presenter === null) {
+      if (master === null) {
         stop(sessionId);
-        return callback(noPresenterMessage);
+        return callback(noMasterMessage);
       }
 
-      presenter.webRtcEndpoint.connect(webRtcEndpoint, (connectEndpointError) => {
+      master.playerEndpoint.connect(webRtcEndpoint, (connectEndpointError) => {
         if (connectEndpointError) {
           stop(sessionId);
           return callback(connectEndpointError);
         }
-        if (presenter === null) {
+        if (master === null) {
           stop(sessionId);
-          return callback(noPresenterMessage);
+          return callback(noMasterMessage);
         }
 
         callback(null, sdpAnswer);
@@ -290,14 +204,72 @@ function startViewer(sessionId, ws, sdpOffer, callback) {
   });
 }
 
+/**
+ * Start receiving a stream from the RTSP server and offer it as an endpoint for the broadcaster
+ * @param  {Function} callback
+ */
+function startRTSP(callback) {
+  if (master !== null) {
+    return callback('Master already present');
+  }
+
+  log('Starting RTSP/HTTP mjpeg stream relay...');
+
+  getKurentoClient((error, _kurentoClient) => {
+    if (error) {
+      stop('master');
+      return callback(error);
+    }
+
+    _kurentoClient.create('MediaPipeline', (mediaPipelineError, _pipeline) => {
+      if (mediaPipelineError) {
+        log('Error creating media pipline');
+        return callback(mediaPipelineError);
+      }
+
+      // PlayerEndpoint params
+      const params = {
+        uri: config.rce.client.rtspURI,
+        useEncodedMedia: false, // true
+      };
+
+      master = {};
+      master.pipeline = _pipeline;
+
+      master.pipeline.create('PlayerEndpoint', params, (playerEndpointError, _playerEndpoint) => {
+        if (playerEndpointError) {
+          log('Error creating player endpoint');
+          return callback(playerEndpointError);
+        }
+
+        master.playerEndpoint = _playerEndpoint;
+        master.playerEndpoint.play((playError) => {
+          if (playError) {
+            log('Error playing back the stream');
+            return callback(playError);
+          }
+        });
+      });
+    });
+  });
+}
+
+/**
+ * Clear a candidate from the queue
+ * @param  {Number} sessionId The ID of the session of concern
+ */
 function clearCandidatesQueue(sessionId) {
   if (candidatesQueue[sessionId]) {
     delete candidatesQueue[sessionId];
   }
 }
 
+/**
+ * Close either the master endpoint or a viewer endpoint
+ * @param  {[type]} sessionId [description]
+ */
 function stop(sessionId) {
-  if (presenter !== null && presenter.id === sessionId) {
+  if (master !== null && sessionId === 'master') {
     viewers.forEach((viewer) => {
       if (viewer.ws) {
         viewer.ws.send(JSON.stringify({
@@ -306,8 +278,8 @@ function stop(sessionId) {
       }
     });
 
-    presenter.pipeline.release();
-    presenter = null;
+    master.pipeline.release();
+    master = null;
     viewers = [];
   } else if (viewers[sessionId]) {
     viewers[sessionId].webRtcEndpoint.release();
@@ -317,13 +289,15 @@ function stop(sessionId) {
   clearCandidatesQueue(sessionId);
 }
 
+/**
+ * Handle an incoming ICE candidate
+ * @param  {Number} sessionId  The ID of the session of concern
+ * @param  {Object} _candidate The ICE candidate
+ */
 function onIceCandidate(sessionId, _candidate) {
   const candidate = kurento.getComplexType('IceCandidate')(_candidate);
 
-  if (presenter && presenter.id === sessionId && presenter.webRtcEndpoint) {
-    log('Sending presenter candidate');
-    presenter.webRtcEndpoint.addIceCandidate(candidate);
-  } else if (viewers[sessionId] && viewers[sessionId].webRtcEndpoint) {
+  if (viewers[sessionId] && viewers[sessionId].webRtcEndpoint) {
     log('Sending viewer candidate');
     viewers[sessionId].webRtcEndpoint.addIceCandidate(candidate);
   } else {
