@@ -3,10 +3,12 @@ import debug from 'debug';
 
 import KoaSocket from 'koa-socket';
 import * as tracker from '../utils/client-tracker';
+import * as store from '../store';
 
 const log = debug('rsvp-server:control-io');
-const controlIO = new KoaSocket('ControlIO');
 const acceptedEvents = ['test', 'disconnect'];
+
+export const controlIO = new KoaSocket('ControlIO');
 
 /**
  * Initialise the socket server
@@ -32,12 +34,14 @@ function attachCoreListeners(io) {
   // Add listener for any connection
   io.on('connection', ctx => {
     tracker.add(ctx.socket.id);
-    log(`New client connected. Number of clients: ${ctx.socket.server.engine.clientsCount}`);
+    store.set('server.controlIOClients.number', ctx.socket.server.engine.clientsCount / 2);
+    log(`New client connected. Number of clients: ${store.server.controlIOClients.number}`);
 
     // Add listener for specific client disconnection
     ctx.socket.on('disconnect', () => {
       tracker.remove(ctx.socket.id);
-      log(`Client disconnected. Number of clients: ${ctx.socket.server.engine.clientsCount}`);
+      store.set('server.controlIOClients.number', ctx.socket.server.engine.clientsCount / 2);
+      log(`Client disconnected. Number of clients: ${store.server.controlIOClients.number}`);
     });
   });
 
@@ -54,6 +58,9 @@ function attachCoreListeners(io) {
  */
 function attachControlListeners(io) {
   // Some control related commands
+  io.on('data', (data) => {
+    log(data);
+  });
 }
 
 /**

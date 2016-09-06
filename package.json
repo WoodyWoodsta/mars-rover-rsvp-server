@@ -33,7 +33,8 @@
     "koa-router": "^7",
     "koa-socket": "^4",
     "koa-static": "^3",
-    "socket.io-client": "^1.4.8",
-    "kurento-client": "Kurento/kurento-client-js"
+    "kurento-client": "Kurento/kurento-client-js",
+    "object-path": "^0.11.1",
+    "socket.io-client": "^1.4.8"
   }
 }

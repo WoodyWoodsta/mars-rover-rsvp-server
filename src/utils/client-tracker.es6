@@ -18,7 +18,7 @@ export function remove(clientId) {
     return false;
   }
 
-  clients.slice(index, 1);
+  clients.splice(index, 1);
   return true;
 }
 

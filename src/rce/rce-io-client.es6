@@ -32,4 +32,8 @@ function attachSocketListeners(io) {
   io.on('test', () => {
     log('Received test WebSocket message from RCE');
   });
+
+  io.on('data', (data) => {
+    log('New data received');
+  });
 }

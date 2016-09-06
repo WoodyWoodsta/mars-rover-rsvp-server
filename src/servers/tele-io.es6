@@ -4,7 +4,8 @@ import debug from 'debug';
 import KoaSocket from 'koa-socket';
 
 const log = debug('rsvp-server:tele-io');
-const teleIO = new KoaSocket('TeleIO');
+
+export const teleIO = new KoaSocket('TeleIO');
 
 /**
  * Initialise the socket server
@@ -31,5 +32,9 @@ function attachCoreListeners(io) {
 
   io.on('test', () => {
     log('Test message received on TeleIO');
+  });
+
+  io.on('data', (data) => {
+    log(data);
   });
 }
