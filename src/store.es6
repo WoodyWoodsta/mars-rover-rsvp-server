@@ -49,7 +49,22 @@ export const control = {
   _type: 'sink',
 };
 
+export const rceState = {
+  rceCpu: undefined,
+  rceMemory: undefined,
+  camCpu: undefined,
+  camMemory: undefined,
+  _watched: {
+    rceCpu: ['teleIO'],
+    rceMemory: ['teleIO'],
+    camCpu: ['teleIO'],
+    camMemory: ['teleIO'],
+  },
+  _type: 'sink',
+};
+
 export const stores = {
+  rceState,
   control,
   server,
 };

@@ -4,6 +4,7 @@ import { readFileSync } from 'fs';
 import SocketClient from 'socket.io-client';
 
 import * as store from '../store';
+import * as rceIOClientTranslator from './rce-io-client-translator';
 
 const log = debug('rsvp-server:rce-io-client');
 const config = JSON.parse(readFileSync('./config.json'));
@@ -39,7 +40,7 @@ function attachSocketListeners(io) {
     log('Received test WebSocket message from RCE');
   });
 
-  io.on('data', (data) => {
-    log('New data received');
+  io.on('data', (message) => {
+    rceIOClientTranslator.onData(message, 'data');
   });
 }
