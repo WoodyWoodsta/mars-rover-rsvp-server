@@ -1,24 +1,30 @@
 /* rce-io-client.es6 */
 import debug from 'debug';
-
 import { readFileSync } from 'fs';
 import SocketClient from 'socket.io-client';
+
+import * as store from '../store';
 
 const log = debug('rsvp-server:rce-io-client');
 const config = JSON.parse(readFileSync('./config.json'));
 
+export let rceIOClient;
+
 export default function () {
   log('Connecting to RCEIO WebSocket...');
-  const rceIOClient = new SocketClient(config.rce.client.socketURI);
+  rceIOClient = new SocketClient(config.rce.client.socketURI);
 
   rceIOClient.on('connect', () => {
     log('Connected to RCEIO WebSocket');
-    attachSocketListeners(this);
+    attachSocketListeners(rceIOClient);
 
-    this.emit('test', {});
+    store.set('server.rover.isOnline', true);
+
+    rceIOClient.emit('test', {});
   });
 
   rceIOClient.on('connect_error', () => {
+    store.set('server.rover.isOnline', false);
     log('Failed to connect to RCEIO WebSocket');
   });
 }

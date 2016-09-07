@@ -52,4 +52,4 @@ app.server.listen(config.rsvp.server.port, () => {
 });
 
 // Initialise client WebSocket connection to RCE
-// rceIOClient();
+rceIOClient();

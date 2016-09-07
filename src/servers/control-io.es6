@@ -4,6 +4,8 @@ import debug from 'debug';
 import KoaSocket from 'koa-socket';
 import * as tracker from '../utils/client-tracker';
 import * as store from '../store';
+import * as controlIOTranslator from './control-io-translator';
+
 
 const log = debug('rsvp-server:control-io');
 const acceptedEvents = ['test', 'disconnect'];
@@ -58,9 +60,7 @@ function attachCoreListeners(io) {
  */
 function attachControlListeners(io) {
   // Some control related commands
-  io.on('data', (data) => {
-    log(data);
-  });
+  io.on('data', controlIOTranslator.onData);
 }
 
 /**
@@ -70,13 +70,11 @@ function attachControlListeners(io) {
 function attachMiddleware(io) {
   // Restrict socket communication to that which is allowed control
   io.use((ctx, next) => {
-    log(`Checking client access for event: '${ctx.event}'`);
     if (tracker.hasControl(ctx.socket.id) || acceptedEvents.includes(ctx.event)) {
-      log('Client granted access');
       return next();
     }
 
-    log('Client access rejected');
-    throw new Error('Client not in control');
+    log(`Client ${ctx.socket.id} access rejected`);
+    throw new Error(`Client ${ctx.socket.id} not currently in control`);
   });
 }
