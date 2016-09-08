@@ -36,13 +36,13 @@ function attachCoreListeners(io) {
   // Add listener for any connection
   io.on('connection', ctx => {
     tracker.add(ctx.socket.id);
-    store.set('server.controlIOClients.number', ctx.socket.server.engine.clientsCount / 2);
+    store.server.set('controlIOClients.number', ctx.socket.server.engine.clientsCount / 2);
     log(`New client connected. Number of clients: ${store.server.controlIOClients.number}`);
 
     // Add listener for specific client disconnection
     ctx.socket.on('disconnect', () => {
       tracker.remove(ctx.socket.id);
-      store.set('server.controlIOClients.number', ctx.socket.server.engine.clientsCount / 2);
+      store.server.set('controlIOClients.number', ctx.socket.server.engine.clientsCount / 2);
       log(`Client disconnected. Number of clients: ${store.server.controlIOClients.number}`);
     });
   });

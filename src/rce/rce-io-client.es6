@@ -19,13 +19,13 @@ export default function () {
     log('Connected to RCEIO WebSocket');
     attachSocketListeners(rceIOClient);
 
-    store.set('server.rover.isOnline', true);
+    store.server.set('rover.isOnline', true);
 
     rceIOClient.emit('test', {});
   });
 
   rceIOClient.on('connect_error', () => {
-    store.set('server.rover.isOnline', false);
+    store.server.set('rover.isOnline', false);
     log('Failed to connect to RCEIO WebSocket');
   });
 }

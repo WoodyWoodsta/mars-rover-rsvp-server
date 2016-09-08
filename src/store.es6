@@ -4,6 +4,7 @@
  */
 import debug from 'debug';
 import objectPath from 'object-path';
+import { EventEmitter } from 'events';
 
 import { controlIO } from './servers/control-io';
 import { teleIO } from './servers/tele-io';
@@ -12,13 +13,79 @@ import { rceIOClient } from './rce/rce-io-client';
 const log = debug('rsvp-server:store');
 
 /**
- * Server state data
- * SOURCE
+ * A store of data which allows declarative and imperative subscriptions to data changes as well as emits notifications of changes
+ * to available and specified web sockets
+ * @param {String}  name    The name of the data store. Is required to be the name of the `DataStore` instance
+ * @param {String}  type    The primary direction of flow of data
+ * @param {Object}  fields  The data fields to store
+ * @param {Object}  watched An array of socket channel names or callback functions for specific data paths
+ */
+class DataStore extends EventEmitter {
+  constructor(name, type = 'sink', fields = {}, watched = {}) {
+    super();
+
+    // Copy in fields
+    Object.assign(this, fields);
+    this.name = name;
+    this._type = type;
+    this._watched = watched;
+
+    this._createAutoListeners();
+  }
+
+  /**
+   * Mutate the store, optionally notifying listeners on specific socket channels of the change
+   * The mutation will also fire events pertaining to the path of the change and will do so for every node along the path tree,
+   * downwards from the root.
+   * NOTE: Mutating the store will automatically notify sockets as in notifyees
+   * @param {String}                path      The path of the property to change, relative to this `DataStore`
+   * @param {Any}                   data      The new data
+   * @param {Array/String/Function} notifyees Custom notification: the name of the socket channel to notify on, or an array of
+   *                                          such names, or a callback function, or an array of callback functions or a mixed
+   *                                          array of notifyees or callback functions :D
+   */
+  set(path, data, notifyees = []) {
+    const notified = this._watched[path];
+
+    // Record and mutate
+    let dotIndex = 0;
+    const oldValue = objectPath.get(this, path);
+    objectPath.set(this, path, data);
+
+    while (dotIndex > -1) {
+      const sub = path.slice(0, dotIndex || undefined);
+      this.emit(`${sub}-changed`, { path, newValue: data, oldValue });
+
+      dotIndex = path.indexOf('.', dotIndex + 1);
+    }
+
+    // Custom notify based on passed in `notifyees`
+    if (notifyees) {
+      customNotify(notified, this.name, path, data, oldValue, notifyees);
+    }
+  }
+
+  _createAutoListeners() {
+    Object.keys(this._watched).forEach((watchKey) => {
+      if (this._watched[watchKey].length !== 0) {
+        // Only listen if there are watchers in the array
+        this.on(`${watchKey}-changed`, function onChanged(message) {
+          setTimeout(() => {
+            customNotify([], this.name, message.path, message.newValue, message.oldValue, this._watched[watchKey]);
+          }, 0);
+        });
+      }
+    });
+  }
+}
+
+/**
+ * Store for the server state data
  * @member {Object} controlIOClients  Of the clients connected to the controlIO socket
  * @member {Object} teleIOClients     Of the clients connected to the teleIO socket
  * @member {Object} rover             Of the rover
  */
-export const server = {
+export const server = new DataStore('server', 'source', {
   controlIOClients: {
     number: 0,
   },
@@ -30,38 +97,37 @@ export const server = {
   rover: {
     isOnline: false,
   },
-
-  _watched: {
-    'controlIOClients.number': ['teleIO'],
-    'teleIOClients.number': ['teleIO'],
-    'rover.isOnline': ['teleIO'],
-  },
-  _type: 'source',
-};
+}, {
+  'controlIOClients.number': ['teleIO'],
+  'teleIOClients.number': ['teleIO'],
+  'rover.isOnline': ['teleIO'],
+});
 
 /**
- * Control input store
- * SINK
+ * Store for the control input
+ * @member {Object} driveInput  The input values from the drive joystick
+ * @member {Object} testLED     The state of the test LED
  */
-export const control = {
-  _watched: {
-  },
-  _type: 'sink',
-};
+export const control = new DataStore('control', 'sink');
 
-export const rceState = {
+/**
+ * Store for the RCE state and telemetry
+ * @member {Number} rceCpu    The percentage CPU usage taken up by the RCE Node process
+ * @member {Number} rceMemory The percentage of physically available memory taken up by the RCE Node process
+ * @member {Number} camCpu    The percentage CPU usage taken up by the cam process
+ * @member {Number} camMemory The percentage of physically available memory taken up by the cam process
+ */
+export const rceState = new DataStore('rceState', 'sink', {
   rceCpu: undefined,
   rceMemory: undefined,
   camCpu: undefined,
   camMemory: undefined,
-  _watched: {
-    rceCpu: ['teleIO'],
-    rceMemory: ['teleIO'],
-    camCpu: ['teleIO'],
-    camMemory: ['teleIO'],
-  },
-  _type: 'sink',
-};
+}, {
+  rceCpu: ['teleIO'],
+  rceMemory: ['teleIO'],
+  camCpu: ['teleIO'],
+  camMemory: ['teleIO'],
+});
 
 export const stores = {
   rceState,
@@ -69,77 +135,34 @@ export const stores = {
   server,
 };
 
-/**
- * Mutate the store, optionally notifying listeners on specific socket channels of the change
- * NOTE: Mutating the store will automatically notify according to the `_watched` array in each store object
- * @param {String}                path      The path of the property to change
- * @param {Any}                   data      The new data
- * @param {Array/String/Function} notifyees Custom notification: the name of the socket channel to notify on, or an array of
- *                                          such names, or a callback function, or an array of callback functions or a mixed
- *                                          array of notifyees or callback functions :D
- */
-export function set(path, data, notifyees) {
-  // Record of notified
-  const notified = [];
-
-  // Record and mutate
-  const baseDotIdx = path.indexOf('.');
-  let dotIndex = 0;
-  const base = path.slice(0, baseDotIdx);
-  const key = path.slice(baseDotIdx + 1);
-
-  const oldValue = objectPath.get(stores, path);
-  objectPath.set(stores, path, data);
-
-  while (dotIndex > -1) {
-    const sub = key.slice(0, dotIndex || undefined);
-    if (stores[base]._watched[sub]) {
-      stores[base]._watched[sub].forEach((notifyee) => {
-        // Handle all types
-        if (typeof notifyee === 'function') {
-          notifyee(data, oldValue, path);
-        } else {
-          notifyMutate(notifyee, base, path, oldValue, data);
-          notified.push(notifyee);
-        }
-      });
-
-      break;
+// === Private ===
+function customNotify(notified, name, path, data, oldValue, notifyees) {
+  // Handle all types
+  if (typeof notifyees === 'string') {
+    // One notifyee
+    if (!notified.includes(notifyees)) {
+      notifyMutate(notifyees, name, path, data, oldValue);
+      notified.push(notifyees);
     }
-
-    dotIndex = key.indexOf('.', dotIndex + 1);
-  }
-
-  // Custom Notify
-  if (notifyees) {
-    // Handle all types
-    if (typeof notifyees === 'string') {
-      // One notifyee
-      if (!notified.includes(notifyees)) {
-        notifyMutate(notifyees, base, path, data, oldValue);
-        notified.push(notifyees);
+  } else if (notifyees.constructor === Array) {
+    // Multiple notifyees
+    notifyees.forEach((notifyee) => {
+      // Handle all types
+      if (typeof notifyee === 'function') {
+        notifyee(data, oldValue, path);
+      } else if (!notified.includes(notifyee)) {
+        // Do not notify more than once
+        notifyMutate(notifyee, name, path, data, oldValue);
+        notified.push(notifyee);
       }
-    } else if (notifyees.constructor === Array) {
-      // Multiple notifyees
-      notifyees.forEach((notifyee) => {
-        // Handle all types
-        if (typeof notifyee === 'function') {
-          notifyee(data, oldValue, path);
-        } else if (!notified.includes(notifyee)) {
-          // Do not notify more than once
-          notifyMutate(notifyee, base, path, data, oldValue);
-          notified.push(notifyee);
-        }
-      });
-    } else if (typeof notifyees === 'function') {
-      notifyees(data, oldValue, path);
-    } else {
-      log('Notifyee list is not a string nor an array');
-    }
+    });
+  } else if (typeof notifyees === 'function') {
+    notifyees(data, oldValue, path);
+  } else {
+    log('Notifyee list is not a string nor an array');
   }
 }
 
-// === Private ===
 /**
  * Emit a notification of a mutation on a store property
  * @param  {String} notifyee  The socket on which to send the notification
@@ -148,7 +171,7 @@ export function set(path, data, notifyees) {
  * @param  {any}    oldValue  The previous value
  * @param  {any}    newValue  The new value
  */
-function notifyMutate(notifyee, storeName, path, oldValue, newValue) {
+function notifyMutate(notifyee, storeName, path, newValue, oldValue) {
   // Construct message to send
   const message = {
     type: 'mutate',
