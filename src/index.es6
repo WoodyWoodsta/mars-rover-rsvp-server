@@ -13,6 +13,7 @@ import rceIOClient from './rce/rce-io-client';
 import * as controlIO from './servers/control-io';
 import * as teleIO from './servers/tele-io';
 import * as kurentoIO from './servers/kurento-io';
+import * as store from './store';
 
 const log = debug('rsvp-server:control-server');
 
@@ -53,3 +54,9 @@ app.server.listen(config.rsvp.server.port, () => {
 
 // Initialise client WebSocket connection to RCE
 rceIOClient();
+
+// TODO: REMOVE
+setInterval(() => {
+  log('Toggling test data store');
+  store.hardwareState.set('analog.initialised', !store.hardwareState.analog.initialised);
+}, 5000);

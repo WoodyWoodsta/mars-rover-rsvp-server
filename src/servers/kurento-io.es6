@@ -4,6 +4,8 @@ import KoaSocket from 'koa-socket';
 import kurento from 'kurento-client';
 import { readFileSync } from 'fs';
 
+import * as store from '../store';
+
 const log = debug('rsvp-server:kurento-io');
 const config = JSON.parse(readFileSync('./config.json')); // TODO: Convert this to a javascript config file
 const kurentoIO = new KoaSocket('KurentoIO');
@@ -31,6 +33,18 @@ export function initSocket(app) {
   startRTSP((error) => {
     if (!error) {
       log('RTSP/HTTP mjpeg stream connected successfully');
+    }
+  });
+
+  store.hardwareState.on('camera.running-changed', (event) => {
+    if (event.newValue) {
+      startRTSP((error) => {
+        if (!error) {
+          log('RTSP/HTTP mjpeg stream connected successfully');
+        }
+      });
+    } else {
+      stop('master');
     }
   });
 }

@@ -11,8 +11,9 @@ export function onData(message, event) {
       case 'rceState':
         store.rceState.set(message.path, message.data.newValue);
         break;
-      case 'server':
-        store.server.set(message.path, message.data.newValue);
+      case 'hardwareState':
+        log('Got message from the hardware state');
+        store.hardwareState.set(message.path, message.data.newValue);
         break;
       default:
         log(`Storename '${message.storeName}' is not recognised`);
