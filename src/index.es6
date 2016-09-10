@@ -54,9 +54,3 @@ app.server.listen(config.rsvp.server.port, () => {
 
 // Initialise client WebSocket connection to RCE
 rceIOClient();
-
-// TODO: REMOVE
-setInterval(() => {
-  log('Toggling test data store');
-  store.hardwareState.set('analog.initialised', !store.hardwareState.analog.initialised);
-}, 5000);
