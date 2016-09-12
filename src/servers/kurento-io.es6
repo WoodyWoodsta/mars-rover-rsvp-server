@@ -30,12 +30,6 @@ export function initSocket(app) {
 
   log('KurentoIO WebSocket live');
 
-  startRTSP((error) => {
-    if (!error) {
-      log('RTSP/HTTP mjpeg stream connected successfully');
-    }
-  });
-
   store.hardwareState.on('camera.running-changed', (event) => {
     if (event.newValue) {
       startRTSP((error) => {

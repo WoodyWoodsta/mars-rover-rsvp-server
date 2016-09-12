@@ -1,14 +1,23 @@
 /* controller.es6 */
 import debug from 'debug';
 
-const log = debug('rsvp-server:rce-controller');
-const controllerIP = null;
+import * as store from '../store';
 
-/**
- * [checkControl description]
- * @param  {[type]} ip [description]
- * @return {[type]}    [description]
- */
-function checkControl(ip) {
-  return controllerIP === ip;
+const log = debug('rsvp-server:rce-controller');
+
+export function init() {
+  store.server.on('rover.isOnline-changed', _onRoverIsOnlineChanged);
+}
+
+// === Private ===
+
+function _onRoverIsOnlineChanged(event) {
+  if (!event.newValue) {
+    store.hardwareState.set('camera.running', false);
+    // TODO: Write a reset method
+    // store.hardwareState.reset();
+  } else {
+    // TODO: Write a synchronisation procedure
+    // store.hardwareState.sync();
+  }
 }

@@ -12,11 +12,10 @@ export function onData(message, event) {
         store.rceState.receiveData(message.fullPath, message.path, message.data.newValue);
         break;
       case 'hardwareState':
-        log('Got message from the hardware state');
         store.hardwareState.receiveData(message.fullPath, message.path, message.data.newValue);
         break;
       default:
-        log(`Storename '${message.storeName}' is not recognised`);
+        log(`Storename '${message.storeName}' is not recognised (path: ${message.path})`);
     }
   }
 }
