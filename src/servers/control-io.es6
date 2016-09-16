@@ -59,8 +59,8 @@ function attachCoreListeners(io) {
  * @param  {Object} io The KoaSocket instance to attach the listeners to
  */
 function attachControlListeners(io) {
-  // Some control related commands
   io.on('data', controlIOTranslator.onData);
+  io.on('post', controlIOTranslator.onPost);
 }
 
 /**
