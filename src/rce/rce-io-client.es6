@@ -11,13 +11,17 @@ const config = JSON.parse(readFileSync('./config.json'));
 
 export let rceIOClient;
 
+let listenersAttached = false;
+
 export default function () {
   log('Connecting to RCEIO WebSocket...');
   rceIOClient = new SocketClient(config.rce.client.socketURI);
 
   rceIOClient.on('connect', () => {
     log('Connected to RCEIO WebSocket');
-    attachSocketListeners(rceIOClient);
+    if (!listenersAttached) {
+      attachSocketListeners(rceIOClient);
+    }
 
     store.server.set('rover.isOnline', true);
 
@@ -43,4 +47,6 @@ function attachSocketListeners(io) {
   io.on('data', (message) => {
     rceIOClientTranslator.onData(message, 'data');
   });
+
+  listenersAttached = true;
 }

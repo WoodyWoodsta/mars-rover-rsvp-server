@@ -3,6 +3,8 @@ import debug from 'debug';
 
 import KoaSocket from 'koa-socket';
 
+import * as store from '../store';
+
 const log = debug('rsvp-server:tele-io');
 
 export const teleIO = new KoaSocket('TeleIO');
@@ -18,6 +20,11 @@ export function initSocket(app) {
   attachCoreListeners(teleIO);
 
   log('TeleIO WebSocket live');
+
+  // TODO: REMOVE
+  store.rceState.on('controller.currentSequenceIndex-changed', (event) => {
+    log(`Index = Old: ${event.oldValue}, New: ${event.newValue}`);
+  });
 }
 
 // === Private ===

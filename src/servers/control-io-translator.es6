@@ -25,10 +25,13 @@ export function onData(message) {
  * @param  {Object} event The message received via socket
  */
 export function onPost(event) {
-  switch (event.type) {
+  switch (event.data.type) {
     case 'upload-sequence':
       // Simply relay
-      rceIOClient.emit('post', event);
+      rceIOClient.emit('post', event.data);
+      break;
+    case 'playback-sequence':
+      rceIOClient.emit('post', event.data);
       break;
     default:
 
