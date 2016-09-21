@@ -20,11 +20,6 @@ export function initSocket(app) {
   attachCoreListeners(teleIO);
 
   log('TeleIO WebSocket live');
-
-  // TODO: REMOVE
-  store.rceState.on('controller.currentSequenceIndex-changed', (event) => {
-    log(`Index = Old: ${event.oldValue}, New: ${event.newValue}`);
-  });
 }
 
 // === Private ===
