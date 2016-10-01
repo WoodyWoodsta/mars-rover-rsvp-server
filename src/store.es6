@@ -4,7 +4,7 @@
  */
 import debug from 'debug';
 import objectPath from 'object-path';
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'eventemitter3';
 
 import { controlIO } from './servers/control-io';
 import { teleIO } from './servers/tele-io';
@@ -189,9 +189,37 @@ export const hardwareState = new DataStore('hardwareState', 'sink', {
   },
   proximity: {
     initialised: false,
+    running: false,
+    values: {
+      front: 0,
+      rear: 0,
+      head: 0,
+    },
+    warn: {
+      front: false,
+      rear: false,
+      head: false,
+    },
+    shutdown: {
+      front: false,
+      rear: false,
+      head: false,
+    },
   },
   servos: {
     initialised: false,
+    values: {
+      driveFrontLeft: 0,
+      driveFrontRight: 0,
+      driveRearLeft: 0,
+      driveRearRight: 0,
+      steerFrontLeft: 0,
+      steerFrontRight: 0,
+      steerRearLeft: 0,
+      steerRearRight: 0,
+      headPan: 0,
+      headPitch: 0,
+    },
   },
 }, {
   board: ['teleIO'],
