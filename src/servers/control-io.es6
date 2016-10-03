@@ -61,6 +61,7 @@ function attachCoreListeners(io) {
 function attachControlListeners(io) {
   io.on('data', controlIOTranslator.onData);
   io.on('post', controlIOTranslator.onPost);
+  io.on('request', controlIOTranslator.onRequest);
 }
 
 /**

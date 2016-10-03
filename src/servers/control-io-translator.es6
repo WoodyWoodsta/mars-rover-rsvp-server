@@ -2,9 +2,11 @@
 import debug from 'debug';
 
 import { rceIOClient } from '../rce/rce-io-client';
+import * as store from '../store';
 
 const log = debug('rsvp-server:control-io-translator');
 
+// === Incoming ===
 /**
  * Handle messages of event `data`
  * @param  {Object} message The message received via socket
@@ -32,6 +34,20 @@ export function onPost(event) {
       break;
     case 'playback-sequence':
       rceIOClient.emit('post', event.data);
+      break;
+    default:
+
+  }
+}
+
+export function onRequest(event) {
+  switch (event.data.type) {
+    case 'repush':
+      if (store[event.data.payload.storeName]) {
+        store[event.data.payload.storeName].repush(event.data.payload.path, event.data.payload.notifyees);
+      } else {
+        log(`No such store '${event.data.payload.storeName}' found`);
+      }
       break;
     default:
 

@@ -4,6 +4,7 @@ import debug from 'debug';
 import KoaSocket from 'koa-socket';
 
 import * as store from '../store';
+import * as teleIOTranslator from './tele-io-translator';
 
 const log = debug('rsvp-server:tele-io');
 
@@ -18,6 +19,7 @@ export function initSocket(app) {
 
   teleIO.attach(app);
   attachCoreListeners(teleIO);
+  attachTeleListeners(teleIO);
 
   log('TeleIO WebSocket live');
 }
@@ -35,8 +37,12 @@ function attachCoreListeners(io) {
   io.on('test', () => {
     log('Test message received on TeleIO');
   });
+}
 
+function attachTeleListeners(io) {
   io.on('data', (data) => {
     log(data);
   });
+
+  io.on('request', teleIOTranslator.onRequest);
 }
