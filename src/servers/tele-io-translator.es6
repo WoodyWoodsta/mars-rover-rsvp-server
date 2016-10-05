@@ -7,7 +7,6 @@ const log = debug('rsvp-server:tele-io-translator');
 
 // === Incoming ===
 export function onRequest(event) {
-  debugger;
   switch (event.data.type) {
     case 'repush':
       if (store[event.data.payload.storeName]) {

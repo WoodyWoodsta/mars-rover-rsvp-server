@@ -31,19 +31,31 @@ export function initSocket(app) {
   log('KurentoIO WebSocket live');
 
   store.hardwareState.on('camera.running-changed', (event) => {
-    if (event.newValue) {
+    if (event.newValue && !store.server.kurento.streamOnline) {
       startRTSP((error) => {
-        if (!error) {
-          log('RTSP/HTTP mjpeg stream connected successfully');
+        if (error) {
+          store.server.set('kurento.streamOnline', false);
+          log(`RTSP/HTTP mjpeg stream connection failed with error: ${error}`);
         }
       });
-    } else {
+      store.server.set('kurento.streamOnline', true);
+    } else if (!event.newValue) {
+      stop('master');
+    }
+  });
+
+  store.server.on('rover.isOnline-changed', (event) => {
+    if (!event.newValue) {
       stop('master');
     }
   });
 }
 
 // === Private ===
+/**
+ * Attach the core listeners to the socket instance, generally involving the socket connection itself
+ * @param  {Object} io The socket connection to attach to
+ */
 function attachCoreListeners(io) {
   io.on('connection', (ctx) => {
     const sessionId = nextUniqueId();
@@ -53,6 +65,11 @@ function attachCoreListeners(io) {
   });
 }
 
+/**
+ * Attach listeners involving functionality external to the socket connection
+ * @param  {Object} socket    The socket connection to attach to
+ * @param  {Number} sessionId The ID of the session
+ */
 function attachKurentoListeners(socket, sessionId) {
   socket.on('error', () => {
     log(`Connection ${sessionId} error`);
@@ -140,7 +157,7 @@ function getKurentoClient(callback) {
  * @param  {Object}   ws        The WebRTC WebSocket
  * @param  {Object}   sdpOffer  SDP Offer from the session
  * @param  {Function} callback
- * @return {function}             The result of the callback
+ * @return {Any}                The result of the callback
  */
 function startViewer(sessionId, ws, sdpOffer, callback) {
   clearCandidatesQueue(sessionId);
@@ -278,6 +295,7 @@ function clearCandidatesQueue(sessionId) {
  */
 function stop(sessionId) {
   if (master !== null && sessionId === 'master') {
+    // Stop the stream
     viewers.forEach((viewer) => {
       if (viewer.ws) {
         viewer.ws.send(JSON.stringify({
@@ -289,7 +307,9 @@ function stop(sessionId) {
     master.pipeline.release();
     master = null;
     viewers = [];
+    store.server.set('kurento.streamOnline', false);
   } else if (viewers[sessionId]) {
+    // Stop a viewer
     viewers[sessionId].webRtcEndpoint.release();
     delete viewers[sessionId];
   }

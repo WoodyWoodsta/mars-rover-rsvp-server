@@ -163,10 +163,15 @@ export const server = new DataStore('server', 'source', true, {
   rover: {
     isOnline: false,
   },
+
+  kurento: {
+    streamOnline: false,
+  },
 }, {
   'controlIOClients.number': ['teleIO'],
   'teleIOClients.number': ['teleIO'],
-  'rover.isOnline': ['teleIO'],
+  rover: ['teleIO'],
+  kurento: ['teleIO'],
 });
 
 /**
