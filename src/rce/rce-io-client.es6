@@ -24,6 +24,7 @@ export default function () {
     }
 
     store.server.set('rover.isOnline', true);
+    _syncStores();
 
     rceIOClient.emit('test', {});
   });
@@ -32,6 +33,10 @@ export default function () {
     store.server.set('rover.isOnline', false);
     log('Failed to connect to RCEIO WebSocket');
   });
+}
+
+export function sendRequest(type, payload) {
+  rceIOClient.emit('request', { type, payload });
 }
 
 // === Private ===
@@ -49,4 +54,12 @@ function attachSocketListeners(io) {
   });
 
   listenersAttached = true;
+}
+
+/**
+ * Ensure that the stores are in sync if the server comes online after the rover
+ */
+function _syncStores() {
+  rceIOClientTranslator.requestRepush('rceState', '*');
+  rceIOClientTranslator.requestRepush('hardwareState', '*');
 }
