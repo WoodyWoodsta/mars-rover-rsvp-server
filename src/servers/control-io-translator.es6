@@ -15,7 +15,7 @@ export function onData(message) {
   switch (message.data.storeName) {
     case 'control':
       // Simply relay
-      rceIOClient.emit(message.event, message.data);
+      store.control.receiveData(message.data.fullPath, message.data.path, message.data.data.newValue);
       break;
     default:
       log(`Storename '${message.data.storeName}' is not recognised`);

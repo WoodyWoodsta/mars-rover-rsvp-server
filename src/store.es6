@@ -187,9 +187,19 @@ export const control = new DataStore('control', 'sink', false, {
     yMag: 0,
   },
 
+  headInput: {
+    xMag: 0,
+    yMag: 0,
+  },
+
   testLED: {
     isOn: false,
   },
+}, {
+  type: ['rceIO'],
+  driveInput: ['rceIO'],
+  headInput: ['rceIO'],
+  testLED: ['rceIO'],
 });
 
 /**

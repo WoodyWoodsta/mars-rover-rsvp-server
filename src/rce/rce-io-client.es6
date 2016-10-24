@@ -53,6 +53,8 @@ function attachSocketListeners(io) {
     rceIOClientTranslator.onData(message, 'data');
   });
 
+  io.on('request', rceIOClientTranslator.onRequest);
+
   listenersAttached = true;
 }
 

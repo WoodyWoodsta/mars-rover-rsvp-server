@@ -23,16 +23,17 @@ export function onData(message, event) {
 }
 
 export function onRequest(event) {
-  switch (event.data.type) {
+  debugger;
+  switch (event.type) {
     case 'repush':
-      if (store[event.data.payload.storeName]) {
-        store[event.data.payload.storeName].repush(event.data.payload.path, event.data.payload.notifyees);
+      if (store[event.payload.storeName]) {
+        store[event.payload.storeName].repush(event.payload.path, event.payload.notifyees);
       } else {
-        log(`No such store '${event.data.payload.storeName}' found`);
+        log(`No such store '${event.payload.storeName}' found`);
       }
       break;
     default:
-
+      log(`Request type ${event.type} unrecognised`);
   }
 }
 
