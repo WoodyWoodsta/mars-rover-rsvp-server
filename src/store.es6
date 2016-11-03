@@ -218,6 +218,8 @@ export const rceState = new DataStore('rceState', 'sink', false, {
   camCpu: undefined,
   camMemory: undefined,
 
+  systemState: undefined,
+
   controller: {
     sequence: [],
     currentSequenceIndex: null,
@@ -230,6 +232,7 @@ export const rceState = new DataStore('rceState', 'sink', false, {
   camCpu: ['teleIO'],
   camMemory: ['teleIO'],
   controller: ['teleIO'],
+  systemState: ['teleIO'],
 });
 
 /**
@@ -247,6 +250,12 @@ export const hardwareState = new DataStore('hardwareState', 'sink', false, {
   },
   analog: {
     initialised: false,
+    values: {
+      battery: 0,
+    },
+    warnings: {
+      battery: 'none',
+    },
   },
   camera: {
     initialised: false,
