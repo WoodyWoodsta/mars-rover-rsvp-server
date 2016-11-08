@@ -35,6 +35,9 @@ export function onPost(event) {
     case 'playback-sequence':
       rceIOClient.emit('post', event.data);
       break;
+    case 'update-trims':
+      rceIOClient.emit('post', event.data);
+      break;
     default:
 
   }
@@ -48,6 +51,9 @@ export function onRequest(event) {
       } else {
         log(`No such store '${event.data.payload.storeName}' found`);
       }
+      break;
+    case 'save-trims':
+      rceIOClient.emit('request', event.data);
       break;
     default:
 
