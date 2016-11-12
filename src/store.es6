@@ -192,6 +192,11 @@ export const control = new DataStore('control', 'sink', false, {
     yMag: 0,
   },
 
+  buttons: {
+    rotateCW: false,
+    rotateCCW: false,
+  },
+
   testLED: {
     isOn: false,
   },
@@ -200,6 +205,7 @@ export const control = new DataStore('control', 'sink', false, {
   driveInput: ['rceIO'],
   headInput: ['rceIO'],
   testLED: ['rceIO'],
+  buttons: ['rceIO'],
 });
 
 /**

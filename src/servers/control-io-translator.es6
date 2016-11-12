@@ -3,6 +3,8 @@ import debug from 'debug';
 
 import { rceIOClient } from '../rce/rce-io-client';
 import * as store from '../store';
+import { changeRoverIpAddress, restartServer } from '../management';
+
 
 const log = debug('rsvp-server:control-io-translator');
 
@@ -37,6 +39,12 @@ export function onPost(event) {
       break;
     case 'update-trims':
       rceIOClient.emit('post', event.data);
+      break;
+    case 'change-ip-address':
+      changeRoverIpAddress(event.data.payload);
+      break;
+    case 'restart-server':
+      restartServer();
       break;
     default:
 
