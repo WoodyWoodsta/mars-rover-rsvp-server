@@ -232,6 +232,12 @@ export const rceState = new DataStore('rceState', 'sink', false, {
     sequenceState: 'off',
     stateLoopRunning: false,
   },
+
+  selfDiagnostics: {
+    running: false,
+    status: undefined,
+  },
+
 }, {
   rceCpu: ['teleIO'],
   rceMemory: ['teleIO'],
@@ -239,6 +245,7 @@ export const rceState = new DataStore('rceState', 'sink', false, {
   camMemory: ['teleIO'],
   controller: ['teleIO'],
   systemState: ['teleIO'],
+  selfDiagnostics: ['teleIO'],
 });
 
 /**

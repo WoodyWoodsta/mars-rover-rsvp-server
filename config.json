@@ -12,9 +12,9 @@
   "rce": {
     "client": {
       "port": 3000,
-      "ip": "195.85.12.132",
-      "socketURI": "http://195.85.12.132:3000/rce-io",
-      "rtspURI": "http://195.85.12.132:8080/?action=stream"
+      "ip": "196.42.81.40",
+      "socketURI": "http://196.42.81.40:3000/rce-io",
+      "rtspURI": "http://196.42.81.40:8080/?action=stream"
     }
   }
 }

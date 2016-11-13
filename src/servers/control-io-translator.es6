@@ -40,6 +40,9 @@ export function onPost(event) {
     case 'update-trims':
       rceIOClient.emit('post', event.data);
       break;
+    case 'run-self-diagnostics':
+      rceIOClient.emit('post', event.data);
+      break;
     case 'change-ip-address':
       changeRoverIpAddress(event.data.payload);
       break;
