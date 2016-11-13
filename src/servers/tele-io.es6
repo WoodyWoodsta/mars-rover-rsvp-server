@@ -30,9 +30,17 @@ export function initSocket(app) {
  * @param  {Object}  io  The KoaSocket instance to attach the listeners to
  */
 function attachCoreListeners(io) {
-  io.on('connection', ctx => {
-    log(`New client connected. Number of clients: ${ctx.socket.server.engine.clientsCount}`);
+  let count = 0;
+
+  io.on('connection', (ctx) => {
+    log(`New client connected. Number of clients: ${++count}`);
+    store.server.set('teleIOClients.number', count);
+
+    ctx.socket.on('disconnect', () => {
+      store.server.set('teleIOClients.number', --count);
+    });
   });
+
 
   io.on('test', () => {
     log('Test message received on TeleIO');

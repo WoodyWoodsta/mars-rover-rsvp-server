@@ -10,7 +10,7 @@
     "watch": "yarn run clean && babel ./src --presets @woodywoodsta/babel-preset-node -d ./build -w",
     "start": "DEBUG=rsvp* node -r ./resources/babel-external-helpers ./build/index.js",
     "debug": "DEBUG=rsvp* node --inspect --debug-brk -r ./resources/babel-external-helpers ./build/index.js",
-    "forever": "forever start -c \"npm run start\" ./" 
+    "forever": "forever start -c \"npm run start\" ./"
   },
   "repository": {
     "type": "git",
