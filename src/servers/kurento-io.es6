@@ -1,4 +1,9 @@
 /* kurento-io.es6 */
+/**
+ * @author Sean Wood (WoodyWoodsta)
+ * Adapted from https://github.com/Kurento/kurento-tutorial-node/tree/master/kurento-one2many-call
+ */
+
 import debug from 'debug';
 import KoaSocket from 'koa-socket';
 import kurento from 'kurento-client';

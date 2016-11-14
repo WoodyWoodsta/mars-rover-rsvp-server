@@ -1,4 +1,8 @@
 /* management.es6 */
+/**
+ * @author Sean Wood (WoodyWoodsta)
+ */
+
 import debug from 'debug';
 import fs from 'fs';
 import path from 'path';

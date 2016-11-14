@@ -1,4 +1,8 @@
 /* tele-io.es6 */
+/**
+ * @author Sean Wood (WoodyWoodsta)
+ */
+
 import debug from 'debug';
 
 import KoaSocket from 'koa-socket';
@@ -47,6 +51,10 @@ function attachCoreListeners(io) {
   });
 }
 
+/**
+ * Attach custom listeners to the TeleIOClient socket instance
+ * @param  {Object} io The socket instance
+ */
 function attachTeleListeners(io) {
   io.on('data', (data) => {
     log(data);

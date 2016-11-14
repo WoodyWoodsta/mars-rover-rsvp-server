@@ -1,4 +1,8 @@
 /* control-io-translator.es6 */
+/**
+ * @author Sean Wood (WoodyWoodsta)
+ */
+
 import debug from 'debug';
 
 import { rceIOClient } from '../rce/rce-io-client';
@@ -54,6 +58,10 @@ export function onPost(event) {
   }
 }
 
+/**
+ * Handle incoming request messages
+ * @param  {Object} event The incoming property change event
+ */
 export function onRequest(event) {
   switch (event.data.type) {
     case 'repush':

@@ -1,4 +1,8 @@
 /* routes.es6 */
+/**
+ * @author Sean Wood (WoodyWoodsta)
+ */
+
 import debug from 'debug';
 
 import Router from 'koa-router';
@@ -16,6 +20,9 @@ router.post('/test', ctx => {
   log('Test POST received');
 });
 
+/**
+ * Return the configured router middleware instance
+ */
 export default function () {
   return router.middleware();
 }

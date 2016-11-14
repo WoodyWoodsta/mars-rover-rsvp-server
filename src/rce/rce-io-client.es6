@@ -1,4 +1,8 @@
 /* rce-io-client.es6 */
+/**
+ * @author Sean Wood (WoodyWoodsta)
+ */
+
 import debug from 'debug';
 import { readFileSync } from 'fs';
 import SocketClient from 'socket.io-client';
@@ -13,6 +17,9 @@ export let rceIOClient;
 
 let listenersAttached = false;
 
+/**
+ * Initialise the RCEIOClient socket endpoint
+ */
 export default function () {
   log('Connecting to RCEIO WebSocket...');
   rceIOClient = new SocketClient(config.rce.client.socketURI);
@@ -35,6 +42,11 @@ export default function () {
   });
 }
 
+/**
+ * Send a request messahe
+ * @param  {String} type    The request type
+ * @param  {Any}    payload The data associated with the message
+ */
 export function sendRequest(type, payload) {
   rceIOClient.emit('request', { type, payload });
 }

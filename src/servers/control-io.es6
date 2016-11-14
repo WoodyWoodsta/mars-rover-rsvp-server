@@ -1,11 +1,14 @@
 /* control-io.es6 */
-import debug from 'debug';
+/**
+ * @author Sean Wood (WoodyWoodsta)
+ */
 
+import debug from 'debug';
 import KoaSocket from 'koa-socket';
+
 import * as tracker from '../utils/client-tracker';
 import * as store from '../store';
 import * as controlIOTranslator from './control-io-translator';
-
 
 const log = debug('rsvp-server:control-io');
 const acceptedEvents = ['test', 'disconnect'];

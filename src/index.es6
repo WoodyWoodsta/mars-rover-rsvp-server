@@ -1,4 +1,8 @@
 /* index.es6 */
+/**
+ * @author Sean Wood (WoodyWoodsta)
+ */
+
 import debug from 'debug';
 
 import Koa from 'koa';
